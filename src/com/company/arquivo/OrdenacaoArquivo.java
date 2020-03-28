@@ -11,32 +11,41 @@ public class OrdenacaoArquivo {
     private final static int TAMANHO_VETOR = 1000;
     private static int ultimaPosicaoLidaDoArquivoOriginal = 0;
     private static List<String> nomesArquivosAuxiliares = new ArrayList<>();
-    private int quantidadeArquivosAuxiliares = 0;
+    private static int quantidadeTotalArquivosAuxiliares = 10;
 
     public static void ordenarArquivoBinario(String nomeArquivoEntrada, String nomeArquivoSaida) {
-        int arquivoAuxiliar = 0;
+        int arquivoAuxiliar = 1;
         // Divisão em blocos de arquivos ordenados
         // 1- Inicializar o vetor com os primeiros TAMANHO_VETOR registros
         VetorDeOrdenacao[] vetor = inicializaVetor(nomeArquivoEntrada);
+        adicionaNomesAListaDeArquivos();
 
         //Divide os registros em blocos presentes em diferentes arquivos
         while (existeRegistroNoVetor(vetor)) {
-            adicionaNomesAListaDeArquivos(arquivoAuxiliar);
             while (existeRegistroNaoCongeladoNoVetor(vetor)) {
                 // 2- Buscar menor registro possível para ir para o arquivo
                 Aluno menorAluno = buscaMenorAlunoDoVetor(vetor);
                 // 3 - Adicionar registro ao arquivo
-                adicionarAoArquivoDeSaida(menorAluno, nomesArquivosAuxiliares.get(arquivoAuxiliar));
+                adicionarAoArquivoDeSaida(menorAluno, nomesArquivosAuxiliares.get(arquivoAuxiliar-1));
                 // 4- Substituir no vetor o registro pelo próximo do arquivo de entrada
                 // 5- Caso ele venha antes do que foi gravado agora, considere-o congelado
                 substituirAlunoVetor(nomeArquivoEntrada, menorAluno, vetor);
             }
 
+            adicionarBlocoAoArquivo(nomesArquivosAuxiliares.get(arquivoAuxiliar-1));
             vetor = descongelaTodosOsRegistros(vetor);
-            arquivoAuxiliar++;
+            if (arquivoAuxiliar == 10)
+                arquivoAuxiliar = 1;
+            else
+                arquivoAuxiliar++;
         }
 
         System.out.println("SAI");
+    }
+
+    private static void adicionarBlocoAoArquivo(String nomeArquivo) {
+        ArquivoBinarioAcessoAleatorio arquivo = new ArquivoBinarioAcessoAleatorio(nomeArquivo);
+        arquivo.adicionarAlunoNoArquivo(new Aluno(";", -1, -1L));
     }
 
     private static boolean existeRegistroNoVetor(VetorDeOrdenacao[] vetor) {
@@ -94,8 +103,9 @@ public class OrdenacaoArquivo {
     }
 
     //Adiciona os nomes dos arquivos auxiliares na lista de arquivos
-    private static void adicionaNomesAListaDeArquivos(int arquivoNumero) {
-        nomesArquivosAuxiliares.add("arquivoAux" + arquivoNumero + ".dat");
+    private static void adicionaNomesAListaDeArquivos() {
+        for (int i=0; i<quantidadeTotalArquivosAuxiliares; i++)
+            nomesArquivosAuxiliares.add(Integer.toString(i));
     }
 
     //Coloca o menor encontrado no vetor no arquivo auxiliar de saída atual

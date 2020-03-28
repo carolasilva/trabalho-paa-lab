@@ -9,6 +9,7 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        System.out.println("Aguarde enquanto transformamos o arquivo texto fornecido em binário...");
 	    ArquivoTexto arquivo = new ArquivoTexto("LabComp3_Exerc1_dadosTeste.txt");
         ArquivoBinarioAcessoAleatorio arquivoBinario = arquivo.transformaArquivoTextoEmBinario("alunos.dat");
 

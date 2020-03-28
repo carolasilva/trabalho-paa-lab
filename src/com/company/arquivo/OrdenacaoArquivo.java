@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class OrdenacaoArquivo {
-    private final static int TAMANHO_VETOR = 200;
+    private final static int TAMANHO_VETOR = 1000;
     private static int ultimaPosicaoLidaDoArquivoOriginal = 0;
     private static List<String> nomesArquivosAuxiliares = new ArrayList<>();
     private int quantidadeArquivosAuxiliares = 0;
@@ -19,41 +19,47 @@ public class OrdenacaoArquivo {
         // 1- Inicializar o vetor com os primeiros TAMANHO_VETOR registros
         VetorDeOrdenacao[] vetor = inicializaVetor(nomeArquivoEntrada);
 
-        //Inicializar array com nomes dos arquivos auxiliares
-        nomesArquivosAuxiliares = adicionaNomesAListaDeArquivos();
-
-        while (existeRegistroNaoCongeladoNoVetor(vetor)) {
-            System.out.println("----------------------------------------------");
-            for (int i=0; i<TAMANHO_VETOR; i++) {
-                boolean congelado = false;
-                String asterisco = "";
-                if (vetor[i].isCongelado())
-                    asterisco = "*";
-                System.out.println(vetor[i].getNome() + " " + asterisco);
+        //Divide os registros em blocos presentes em diferentes arquivos
+        while (existeRegistroNoVetor(vetor)) {
+            adicionaNomesAListaDeArquivos(arquivoAuxiliar);
+            while (existeRegistroNaoCongeladoNoVetor(vetor)) {
+                // 2- Buscar menor registro possível para ir para o arquivo
+                Aluno menorAluno = buscaMenorAlunoDoVetor(vetor);
+                // 3 - Adicionar registro ao arquivo
+                adicionarAoArquivoDeSaida(menorAluno, nomesArquivosAuxiliares.get(arquivoAuxiliar));
+                // 4- Substituir no vetor o registro pelo próximo do arquivo de entrada
+                // 5- Caso ele venha antes do que foi gravado agora, considere-o congelado
+                substituirAlunoVetor(nomeArquivoEntrada, menorAluno, vetor);
             }
-            // 2- Buscar menor registro possível para ir para o arquivo
-            Aluno menorAluno = buscaMenorAlunoDoVetor(vetor);
 
-            // 3 - Adicionar registro ao arquivo
-            adicionarAoArquivoDeSaida(menorAluno, nomesArquivosAuxiliares.get(arquivoAuxiliar));
-
-            // 4- Substituir no vetor o registro pelo próximo do arquivo de entrada
-            // 5- Caso ele venha antes do que foi gravado agora, considere-o congelado
-            vetor = substituirAlunoVetor(nomeArquivoEntrada, menorAluno, vetor);
+            vetor = descongelaTodosOsRegistros(vetor);
+            arquivoAuxiliar++;
         }
 
-
-        // 6- Se ainda tiver algum registro não congelado, voltar para o passo 3
-        // 7 - Caso contrário:
-            // fechar o arquivo de saída
-            // descongelar registros congelados
-            // abrir nova partição de saída
-            // voltar ao passo 2
+        System.out.println("SAI");
     }
 
+    private static boolean existeRegistroNoVetor(VetorDeOrdenacao[] vetor) {
+        for (int i=0; i<TAMANHO_VETOR; i++) {
+            if (vetor[i].getAluno() != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static VetorDeOrdenacao[] descongelaTodosOsRegistros(VetorDeOrdenacao[] vetor) {
+        for (int i=0; i<TAMANHO_VETOR; i++) {
+            vetor[i].setCongelado(false);
+        }
+
+        return vetor;
+    }
+
+    //Verifica se ainda é possível colocar algum registro no arquivo auxiliar
     private static boolean existeRegistroNaoCongeladoNoVetor(VetorDeOrdenacao[] vetor) {
         for (int i=0; i<TAMANHO_VETOR; i++)
-            if (! vetor[i].isCongelado())
+            if (!vetor[i].isCongelado() && vetor[i].getAluno() != null)
                 return true;
 
         return false;
@@ -64,8 +70,10 @@ public class OrdenacaoArquivo {
     private static VetorDeOrdenacao[] substituirAlunoVetor(String nomeArquivoEntrada, Aluno aluno, VetorDeOrdenacao[] vetor) {
         Aluno novoAluno = buscaProximoAlunoArquivoOriginal(nomeArquivoEntrada);
         boolean congelado = false;
-        if (novoAluno.getNome().compareTo(aluno.getNome()) < 0)
-            congelado = true;
+        if (novoAluno != null) {
+            if (novoAluno.getNome().compareTo(aluno.getNome()) < 0)
+                congelado = true;
+        }
 
         VetorDeOrdenacao aux = new VetorDeOrdenacao(novoAluno, congelado);
         for (int i=0; i<TAMANHO_VETOR; i++) {
@@ -86,19 +94,16 @@ public class OrdenacaoArquivo {
     }
 
     //Adiciona os nomes dos arquivos auxiliares na lista de arquivos
-    private static List<String> adicionaNomesAListaDeArquivos() {
-        List<String> lista = new ArrayList<>();
-        for (int i=0; i<TAMANHO_VETOR; i++) {
-            lista.add("arquivoAux" + i + ".dat");
-        }
-
-        return lista;
+    private static void adicionaNomesAListaDeArquivos(int arquivoNumero) {
+        nomesArquivosAuxiliares.add("arquivoAux" + arquivoNumero + ".dat");
     }
 
     //Coloca o menor encontrado no vetor no arquivo auxiliar de saída atual
     private static void adicionarAoArquivoDeSaida(Aluno menorAluno, String nomeArquivoSaida) {
-        ArquivoBinarioAcessoAleatorio arquivoSaida = new ArquivoBinarioAcessoAleatorio(nomeArquivoSaida);
-        arquivoSaida.adicionarAlunoNoArquivo(menorAluno);
+        if (menorAluno != null) {
+            ArquivoBinarioAcessoAleatorio arquivoSaida = new ArquivoBinarioAcessoAleatorio(nomeArquivoSaida);
+            arquivoSaida.adicionarAlunoNoArquivo(menorAluno);
+        }
     }
 
     // Busca menor aluno no vetor que pode ser colocado no arquivo de saída

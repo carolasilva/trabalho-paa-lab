@@ -1,7 +1,7 @@
 package com.company.arquivo;
 
 import java.io.*;
-
+// Classe criada pra conseguir definir se na hora de escrever o arquivo deve ser continuado ou reiniciado
 public class AppendableObjectOutputStream  extends ObjectOutputStream {
 
     private boolean append;

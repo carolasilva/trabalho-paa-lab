@@ -8,14 +8,15 @@ import java.util.List;
 
 class ArquivoIndice {
     private ObjectOutputStream outputFile;
+    private File arquivo;
 
     private List<LinhaDoIndex> indice = new ArrayList<>();
 
     ArquivoIndice(String nomeArquivo) {
-        File file = new File(nomeArquivo);
-        boolean append = file.exists();
+        arquivo = new File(nomeArquivo);
+        boolean append = arquivo.exists();
         try {
-            FileOutputStream fos = new FileOutputStream(file, append);
+            FileOutputStream fos = new FileOutputStream(arquivo, append);
             outputFile = new AppendableObjectOutputStream(fos, append);
         } catch (IOException e) {
             e.printStackTrace();
@@ -39,14 +40,27 @@ class ArquivoIndice {
         }
     }
 
-    //Retorna a posição do aluno no arquivo de acordo com a linha especificada no índice
-    int procurarPorMatricula(Long matricula) {
-        for (LinhaDoIndex linha : indice) {
-            if (linha.getMatricula() == matricula)
-                return (int) linha.getPosicao();
-        }
-
-        return -1;
+    void reinicializaIndice() {
+        indice = new ArrayList<>();
     }
 
+    //Retorna a posição do aluno no arquivo de acordo com a linha especificada no índice
+    int procurarPorMatricula(Long matricula) {
+
+        LinhaDoIndex linha;
+
+        try (FileInputStream fis = new FileInputStream(arquivo); ObjectInputStream inputFile = new ObjectInputStream(fis)) {
+            while (fis.available() > 0) {
+                linha = (LinhaDoIndex) inputFile.readObject();
+
+                if (matricula == linha.getMatricula()) {
+                    return (int) linha.getPosicao();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("ERRO ao ler a matricula '" + matricula + "' do disco!");
+            e.printStackTrace();
+        }
+        return -1;
+    }
 }

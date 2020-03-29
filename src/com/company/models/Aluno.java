@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
 
-public class Aluno implements Serializable {
+public class Aluno implements Serializable, Comparable<Aluno> {
     private static final long serialVersionUID = 1L;
     private String nome;
     private long matricula;
@@ -96,4 +96,13 @@ public class Aluno implements Serializable {
     }
 
 
+    @Override
+    public int compareTo(Aluno aluno) {
+        if (aluno == null)
+            return -1;
+        else if (this == null)
+            return 1;
+        else
+            return this.getNome().compareTo(aluno.getNome());
+    }
 }

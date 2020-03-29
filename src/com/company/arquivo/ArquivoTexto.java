@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class ArquivoTexto {
-    File arquivoTexto;
+    private File arquivoTexto;
 
     public ArquivoTexto(String nomeArquivo) {
         this.arquivoTexto = new File(nomeArquivo);

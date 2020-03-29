@@ -12,11 +12,13 @@ public class ArquivoBinarioAcessoAleatorio {
     private RandomAccessFile arquivoAcessoAleatorio;
     private File arquivo;
     private ArquivoIndice arquivoIndice;
+    private String nomeArquivo;
 
     private Long posicao = 0L;
 
     //Cria o arquivo binário com o nome especificado e já cria um arquivo de índice para ele
-    ArquivoBinarioAcessoAleatorio(String nomeArquivo) {
+    public ArquivoBinarioAcessoAleatorio(String nomeArquivo) {
+        this.nomeArquivo = nomeArquivo;
         arquivo = new File(nomeArquivo);
         arquivoIndice = new ArquivoIndice("indice" + nomeArquivo + ".dat");
     }
@@ -67,5 +69,54 @@ public class ArquivoBinarioAcessoAleatorio {
     public Aluno procurarAlunoPorMatricula(Long matricula) {
         int posicao = getArquivoIndice().procurarPorMatricula(matricula);
         return procurarAlunoPorPosicaoNoArquivo(posicao);
+    }
+
+    void apagarArquivo() {
+        this.arquivo.delete();
+        File indice = new File("indice" + this.nomeArquivo + ".dat");
+        indice.delete();
+    }
+
+    void renomearArquivo(String novoNome) {
+        File auxiliar = new File(novoNome);
+        this.arquivo.renameTo(auxiliar);
+        File indice = new File("indice" + this.nomeArquivo + ".dat");
+        File novoIndice = new File("indice" + novoNome + ".dat");
+        indice.renameTo(novoIndice);
+    }
+
+    boolean estaVazio() {
+        return this.arquivo.length() <= 56;
+    }
+
+    boolean comparaTamanho(String arquivo) {
+        File auxiliar = new File(arquivo);
+        return auxiliar.length() == this.arquivo.length();
+    }
+
+    public void atualizarIndice() {
+        try {
+            this.arquivoAcessoAleatorio = new RandomAccessFile(arquivo, "r");
+            this.arquivoIndice.reinicializaIndice();
+            Aluno aluno;
+
+            try{
+                for(int i=0; i<arquivo.length(); ) {
+                    this.arquivoAcessoAleatorio.seek(i * Aluno.DATASIZE);
+                    aluno = Aluno.readData(this.arquivoAcessoAleatorio);
+                    arquivoIndice.addIndice(new LinhaDoIndex(aluno.getMatricula(), i));
+                    i ++;
+                }
+
+                this.arquivoIndice.salvarIndiceCompleto();
+            }
+            catch(EOFException e){  //para quando terminar os dados do arquivo
+            }
+
+            this.arquivoAcessoAleatorio.close();
+        } catch (IOException e) {
+            System.out.println("Erro com o arquivo: " + e.getMessage());
+        }
+        arquivoIndice.salvarIndiceCompleto();
     }
 }
